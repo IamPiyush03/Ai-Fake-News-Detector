@@ -9,6 +9,18 @@ const AnalysisSchema = new mongoose.Schema({
     categories: [String],
     reasoning: { type: String }
   },
+  detailedScores: {
+    contentAnalysis: Number,
+    sourceCredibility: Number,
+    languagePatterns: Number,
+    contextualRelevance: Number
+  },
+  feedbacks: [{
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    isAccurate: Boolean,
+    comment: String,
+    createdAt: { type: Date, default: Date.now }
+  }],
   createdAt: { type: Date, default: Date.now }
 });
 
