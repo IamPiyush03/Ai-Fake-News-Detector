@@ -19,6 +19,7 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h' }
     );
 
+    // Send consistent response format
     res.json({ 
       userId: user._id,
       username: user.username,

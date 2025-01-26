@@ -8,64 +8,43 @@ router.post('/analyze', auth, async (req, res) => {
   try {
     const { text, url } = req.body;
     
-    // Enhanced content validation
     let contentToAnalyze = text;
     if (url) {
       const scrapedContent = await scrapeURL(url);
       contentToAnalyze = scrapedContent.content;
-      
-      // Check for satire sites
-      if (scrapedContent.isSatire) {
-        return res.json({
-          isFake: true,
-          confidenceScore: 100,
-          categories: ['News', 'Satire'],
-          reliability: 'Known Satire Source'
-        });
-      }
     }
 
-    // Minimum content length check
-    if (!contentToAnalyze || contentToAnalyze.length < 50) {
-      return res.status(400).json({
-        error: 'Content too short for reliable analysis'
-      });
-    }
-
-    // Perform analysis
     const analysisResult = await analyzeText(contentToAnalyze);
     
-    // Ensure isFake is properly set
-    const isFake = analysisResult.label === 'FAKE';
-    const confidenceScore = Math.round(analysisResult.confidence * 100);
-    
-    // Store analysis result
-    const newAnalysis = await Analysis.create({
+    // Validate confidence score
+    const confidenceScore = Number.isFinite(analysisResult.confidenceScore) 
+      ? Math.max(0, Math.min(100, Math.round(analysisResult.confidenceScore)))
+      : 50;
+
+    const newAnalysis = new Analysis({
       userId: req.userId,
       text: contentToAnalyze,
       url: url || null,
       result: {
-        isFake: isFake,
-        confidenceScore: confidenceScore,
-        categories: ['News', isFake ? 'Fake News' : 'Real News'],
-        reasoning: analysisResult.reasoning
+        isFake: analysisResult.isFake,
+        confidenceScore, // Using validated score
+        categories: ['News', analysisResult.isFake ? 'Fake News' : 'Real News'],
+        reasoning: analysisResult.reasoning || 'Analysis complete'
       }
     });
 
+    await newAnalysis.save();
+
     res.json({
-      isFake: isFake,
-      confidenceScore: confidenceScore,
-      categories: ['News', isFake ? 'Fake News' : 'Real News'],
-      reliability: confidenceScore > 80 ? 'High' : confidenceScore > 60 ? 'Moderate' : 'Low',
+      isFake: analysisResult.isFake,
+      confidenceScore,
+      categories: ['News', analysisResult.isFake ? 'Fake News' : 'Real News'],
       reasoning: analysisResult.reasoning
     });
 
   } catch (error) {
     console.error('Analysis error:', error);
-    res.status(500).json({
-      error: 'Analysis failed',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Analysis failed', details: error.message });
   }
 });
 

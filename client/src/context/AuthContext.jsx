@@ -12,21 +12,27 @@ const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await loginUser(credentials);
-      const userData = { 
-        id: response.data.userId || response.data._id,
-        username: response.data.username,
-        token: response.data.token 
+  
+      // Validate response
+      if (!response?.userId || !response?.token) {
+        throw new Error('Invalid server response');
+      }
+  
+      const userData = {
+        id: response.userId,
+        username: response.username,
+        token: response.token
       };
-
+  
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
       return userData;
+  
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
+      throw new Error(error.response?.data?.error || 'Login failed');
     }
   };
-
   const register = async (userData) => {
     try {
       const response = await registerUser(userData);
