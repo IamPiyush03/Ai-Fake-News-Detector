@@ -225,8 +225,9 @@ const performCohereAnalysis = async (text, retryCount = 0) => {
 
 // Add validation helper
 const validateScore = (score, defaultValue = 50) => {
-  if (!Number.isFinite(score)) return defaultValue;
-  return Math.max(0, Math.min(100, Math.round(score)));
+  const parsed = parseFloat(score);
+  if (!Number.isFinite(parsed)) return defaultValue;
+  return Math.max(0, Math.min(100, Math.round(parsed)));
 };
 
 const calculateWeightedScore = (scores) => {

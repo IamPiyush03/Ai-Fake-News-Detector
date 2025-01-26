@@ -17,9 +17,9 @@ router.post('/analyze', auth, async (req, res) => {
     const analysisResult = await analyzeText(contentToAnalyze);
     
     // Validate confidence score
-    const confidenceScore = Number.isFinite(analysisResult.confidenceScore) 
-      ? Math.max(0, Math.min(100, Math.round(analysisResult.confidenceScore)))
-      : 50;
+    if (!Number.isFinite(analysisResult.confidenceScore)) {
+      analysisResult.confidenceScore = 50;
+    }
 
     const newAnalysis = new Analysis({
       userId: req.userId,
