@@ -2,6 +2,7 @@
 
 An intelligent news analysis system that leverages AI to detect fake news in real-time. Built with the MERN stack and powered by Hugging Face's NLP models.
 
+# Demo 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue)](https://ai-fake-news-detector.vercel.app/)  
 [![Backend API](https://img.shields.io/badge/Backend-API-green)](https://ai-fake-news-detector-backend.onrender.com)
 
