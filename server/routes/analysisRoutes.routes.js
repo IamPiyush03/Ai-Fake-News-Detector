@@ -4,32 +4,39 @@ import Analysis from '../models/Analysis.js';
 import auth from '../middleware/auth.middleware.js';
 
 const router = express.Router();
+
 router.post('/analyze', auth, async (req, res) => {
   try {
     const { text, url } = req.body;
     
-    let contentToAnalyze = text;
-    if (url) {
-      const scrapedContent = await scrapeURL(url);
-      contentToAnalyze = scrapedContent.content;
+    if (!text && !url) {
+      return res.status(400).json({
+        error: 'Input required',
+        details: 'Please provide either text content or a URL to analyze'
+      });
     }
 
-    const analysisResult = await analyzeText(contentToAnalyze);
-    
-    // Validate confidence score
-    if (!Number.isFinite(analysisResult.confidenceScore)) {
-      analysisResult.confidenceScore = 50;
+    const analysisResult = await analyzeText(text || url, url);
+
+    if (analysisResult.analysis?.error) {
+      return res.status(400).json({
+        error: 'Analysis failed',
+        details: analysisResult.analysis.error
+      });
     }
 
+    const reasoning = analysisResult.analysis?.contentAnalysis?.reasons?.join(', ') || 'Analysis complete';
+
+    // Save analysis results
     const newAnalysis = new Analysis({
       userId: req.userId,
-      text: contentToAnalyze,
+      text: analysisResult.analysis.text,
       url: url || null,
       result: {
         isFake: analysisResult.isFake,
-        confidenceScore, // Using validated score
+        confidenceScore: analysisResult.confidenceScore,
         categories: ['News', analysisResult.isFake ? 'Fake News' : 'Real News'],
-        reasoning: analysisResult.reasoning || 'Analysis complete'
+        reasoning
       }
     });
 
@@ -37,14 +44,21 @@ router.post('/analyze', auth, async (req, res) => {
 
     res.json({
       isFake: analysisResult.isFake,
-      confidenceScore,
+      confidenceScore: analysisResult.confidenceScore,
       categories: ['News', analysisResult.isFake ? 'Fake News' : 'Real News'],
-      reasoning: analysisResult.reasoning
+      reasoning,
+      details: {
+        contentAnalysis: analysisResult.analysis.contentAnalysis,
+        sourceAnalysis: analysisResult.analysis.sourceAnalysis
+      }
     });
 
   } catch (error) {
     console.error('Analysis error:', error);
-    res.status(500).json({ error: 'Analysis failed', details: error.message });
+    res.status(500).json({
+      error: 'Analysis failed',
+      details: error.message
+    });
   }
 });
 
@@ -58,7 +72,8 @@ router.get('/history', auth, async (req, res) => {
     const history = await Analysis.find({ userId: req.userId })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .select('-analysis.reasons'); // Exclude detailed reasons from list view
 
     res.json({
       history,
@@ -72,7 +87,6 @@ router.get('/history', auth, async (req, res) => {
   }
 });
 
-// Delete analysis
 router.delete('/history/:id', auth, async (req, res) => {
   try {
     const analysis = await Analysis.findOneAndDelete({
@@ -86,9 +100,9 @@ router.delete('/history/:id', auth, async (req, res) => {
 
     res.json({ message: 'Analysis deleted successfully' });
   } catch (error) {
+    console.error('Error deleting analysis:', error);
     res.status(500).json({ error: 'Failed to delete analysis' });
   }
 });
-
 
 export default router;
