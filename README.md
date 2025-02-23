@@ -5,6 +5,13 @@ An intelligent news analysis system that leverages AI to detect fake news in rea
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue)](https://ai-fake-news-detector.vercel.app/)
 [![Backend API](https://img.shields.io/badge/Backend-API-green)](https://ai-fake-news-detector-backend.onrender.com)
 
+## ⚠️ Current Status
+
+**Last Commit Notice**: The most recent update contains some unresolved errors. I'm actively working on:
+- Fixing API endpoint inconsistencies
+- Resolving dependency conflicts
+- Addressing authentication flow issues
+
 ## ✨ Features
 
 - 🤖 Real-time AI-powered news analysis
