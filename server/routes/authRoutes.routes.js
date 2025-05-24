@@ -4,6 +4,9 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 const router = express.Router();
 
+   // In authRoutes.routes.js
+   const tokenExpiration = process.env.JWT_EXPIRATION || '1h';
+   const refreshTokenExpiration = process.env.REFRESH_TOKEN_EXPIRATION || '7d';
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;

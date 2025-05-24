@@ -54,13 +54,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/analysis', analysisRoutes);
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+   app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({
-        error: 'Something went wrong!',
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({
+      error: err.name || 'InternalServerError',
+      message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error',
+      code: err.code || 'INTERNAL_ERROR'
     });
-});
+  });
 
 // Start server
 const PORT = process.env.PORT || 5000;
